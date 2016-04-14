@@ -21,10 +21,18 @@ public class Car extends JPanel implements Runnable {
 	private Thread driveThread = new Thread(this);
 	private double currentAngle = 0; // angel of the car
 	private static int[] key = new int[256]; // keyboard input
-	private float MAX_SPEED = 7F;
+	private float MAX_SPEED = 10F;
 	private float speed = 0F; // speed of our racing car
 	private float acceleration = 0.15F;
 	private int player;
+
+	private double force = 0;
+	private double traction = 10;
+	private double mass = 10;
+	private int wheelAngle = 0; // angel of the front wheels
+	private double wheelBase = 100;
+	private double turnDirection = 0;
+	private boolean drifting = false;
 
 	public Car(int player) {
 
@@ -36,12 +44,13 @@ public class Car extends JPanel implements Runnable {
 		try {
 			if (player == 1) {
 				// red car
-				car = ImageIO.read(new File("/home/nicholas/workspace/Test/src/car.png"));
+				car = ImageIO.read(this.getClass().getResource("car.png"));
 
+				wheelBase = car.getHeight();
 				System.out.println(car.getColorModel());
 			} else if (player == 2) {
 				// blue car
-				car = ImageIO.read(this.getClass().getResource("ressources/car2.png"));
+				car = ImageIO.read(this.getClass().getResource("car.png"));
 				x = x + 30;
 			}
 			// background =
@@ -61,15 +70,30 @@ public class Car extends JPanel implements Runnable {
 		driveThread.start();
 	}
 
-	public void paint(Graphics g){
+	public void paint(Graphics g) {
 		super.paint(g);
-		
+
 		dbImage = createImage(getWidth(), getHeight());
 		dbg = dbImage.getGraphics();
 		paintComponent(dbg);
 		g.drawImage(dbImage, 0, 0, this);
+		force = mass * (speed * speed) / (wheelBase * speed / wheelAngle);
+		if (force > traction) {
+			drifting = true;
+			if (turnDirection == 0) {
+				turnDirection = Double.valueOf(currentAngle);
+				System.out.println(turnDirection);
+			}
+			g.drawString(String.valueOf("Drift: " + force), 100, 100);
+		} else {
+			drifting = false;
+			turnDirection = 0;
+			g.drawString(String.valueOf("Not Drifting: " + force), 100, 100);
+		}
+		g.drawString(String.valueOf("Radius: " + (wheelBase * speed / wheelAngle)), 100, 150);
+		g.drawString(String.valueOf("Wheel Angle: " + (wheelAngle)), 100, 200);
 	}
-	
+
 	@Override
 	protected void paintComponent(Graphics g) {
 
@@ -86,27 +110,75 @@ public class Car extends JPanel implements Runnable {
 		g2d.setTransform(rot);
 		// Draws the cars new position and angle
 		g2d.drawImage(car, (int) x, (int) y, 25, 40, this);
-
+		// g2d.drawString(String.valueOf(currentAngle%360), 100, 100);
 	}
 
 	protected void calculateCarPosition() {
 
 		// calculates the new X and Y - coordinates
-		x += Math.sin(currentAngle * Math.PI / 180) * speed * 0.5;
-		y += Math.cos(currentAngle * Math.PI / 180) * -speed * 0.5;
+		if (!drifting) {
+			x += Math.sin(currentAngle * Math.PI / 180) * speed * 0.5;
+			y += Math.cos(currentAngle * Math.PI / 180) * -speed * 0.5;
+		} else {
+			x += Math.sin(turnDirection * Math.PI / 180) * speed * 0.5;
+			y += Math.cos(turnDirection * Math.PI / 180) * -speed * 0.5;
+		}
+
+		if (x < 0) {
+			x = 0;
+		} else if (x > this.getWidth()) {
+			x = this.getWidth();
+		}
+
+		if (y < 0) {
+			y = 0;
+		} else if (y > this.getHeight()) {
+			y = this.getHeight();
+		}
 
 	}
 
 	protected void carMovement() {
 
 		// Player One Key's
+
+		if (drifting) {
+
+			if (wheelAngle > 0) {
+				currentAngle += 2;
+			} else if (wheelAngle < 0) {
+				currentAngle -= 2;
+			}
+
+//			if (turnDirection > 0) {
+//				currentAngle += 2;
+//			} else if (turnDirection < 0) {
+//				currentAngle -= 2;
+//			}
+		}
+
 		if (player == 1) {
 
 			if (key[KeyEvent.VK_LEFT] != 0) {
 				currentAngle -= 2;
+				wheelAngle -= 1;
 
 			} else if (key[KeyEvent.VK_RIGHT] != 0) {
 				currentAngle += 2;
+				wheelAngle += 1;
+
+			} else {
+				if (wheelAngle > 0) {
+					wheelAngle -= 1;
+				} else if (wheelAngle < 0) {
+					wheelAngle += 1;
+				}
+			}
+
+			if (wheelAngle > 30) {
+				wheelAngle = 30;
+			} else if (wheelAngle < -30) {
+				wheelAngle = -30;
 			}
 
 			if (key[KeyEvent.VK_UP] != 0) {
@@ -168,15 +240,14 @@ public class Car extends JPanel implements Runnable {
 			calculateCarPosition();
 
 			try {
-				int sleep = (int) ((1000/fps) - (System.currentTimeMillis() - start));
-				
-				if(sleep > 0){
-				Thread.sleep(sleep);
-				}
-				else{
+				int sleep = (int) ((1000 / fps) - (System.currentTimeMillis() - start));
+
+				if (sleep > 0) {
+					Thread.sleep(sleep);
+				} else {
 					System.out.println("Computer can't keep up with " + fps + " fps!");
 				}
-				} catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
