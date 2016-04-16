@@ -120,12 +120,13 @@ public class Car extends JPanel implements Runnable {
 		// calculates the new X and Y - coordinates
 		// bring driftingAngle to currentAngle
 		double distance = chassisAngle - absoluteAngle;
+		System.out.println((speed/10));
 		if (speed < 1F) {
 			absoluteAngle = chassisAngle;
 		} else if (distance > 0) {
-			absoluteAngle += Math.min(distance, 1);
+			absoluteAngle += Math.min(distance, (speed/10));
 		} else if (distance < 0) {
-			absoluteAngle += Math.max(distance, -1);
+			absoluteAngle += Math.max(distance, -1*(speed/10));
 		}
 		x += Math.sin(absoluteAngle * Math.PI / 180) * speed * 0.5;
 		y += Math.cos(absoluteAngle * Math.PI / 180) * -speed * 0.5;
