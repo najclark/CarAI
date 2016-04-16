@@ -19,7 +19,6 @@ public class Car extends JPanel implements Runnable {
 	private Graphics dbg;
 	private float x = 100F, y = 100F;
 	private Thread driveThread = new Thread(this);
-	private double currentAngle = 0; // angel of the car
 	private static int[] key = new int[256]; // keyboard input
 	private float MAX_SPEED = 10F;
 	private float speed = 0F; // speed of our racing car
@@ -29,9 +28,10 @@ public class Car extends JPanel implements Runnable {
 	private double force = 0;
 	private double traction = 10;
 	private double mass = 10;
-	private int wheelAngle = 0; // angel of the front wheels
+	private double chassisAngle = 0; // angel of the car
+	private double wheelAngle = 0; // angel of the front wheels
 	private double wheelBase = 100;
-	private double turnDirection = 0;
+	private double absoluteAngle = 0;
 	private boolean drifting = false;
 
 	public Car(int player) {
@@ -78,20 +78,22 @@ public class Car extends JPanel implements Runnable {
 		paintComponent(dbg);
 		g.drawImage(dbImage, 0, 0, this);
 		force = mass * (speed * speed) / (wheelBase * speed / wheelAngle);
-		if (force > traction) {
+		if (Math.abs(force) > traction) {
 			drifting = true;
-			if (turnDirection == 0) {
-				turnDirection = Double.valueOf(currentAngle);
-				System.out.println(turnDirection);
-			}
 			g.drawString(String.valueOf("Drift: " + force), 100, 100);
 		} else {
 			drifting = false;
-			turnDirection = 0;
 			g.drawString(String.valueOf("Not Drifting: " + force), 100, 100);
 		}
 		g.drawString(String.valueOf("Radius: " + (wheelBase * speed / wheelAngle)), 100, 150);
-		g.drawString(String.valueOf("Wheel Angle: " + (wheelAngle)), 100, 200);
+		g.drawString(String.valueOf("Speed: " + (speed)), 100, 200);
+		g.drawString(String.valueOf("Current Angle: " + (chassisAngle)), 100, 250);
+		g.drawString(String.valueOf("Drifting Angle: " + (absoluteAngle)), 100, 300);
+		if (chassisAngle == absoluteAngle) {
+			g.drawString("Not Sliding", 100, 350);
+		} else {
+			g.drawString("Sliding", 100, 350);
+		}
 	}
 
 	@Override
@@ -106,23 +108,27 @@ public class Car extends JPanel implements Runnable {
 		// Rotation at the center of the car
 		float xRot = x + 12.5F;
 		float yRot = y + 20F;
-		rot.rotate(Math.toRadians(currentAngle), xRot, yRot);
+		rot.rotate(Math.toRadians(chassisAngle), xRot, yRot);
 		g2d.setTransform(rot);
 		// Draws the cars new position and angle
 		g2d.drawImage(car, (int) x, (int) y, 25, 40, this);
-		// g2d.drawString(String.valueOf(currentAngle%360), 100, 100);
+		//g2d.drawString(String.valueOf(speed), x, y);
 	}
 
 	protected void calculateCarPosition() {
 
 		// calculates the new X and Y - coordinates
-		if (!drifting) {
-			x += Math.sin(currentAngle * Math.PI / 180) * speed * 0.5;
-			y += Math.cos(currentAngle * Math.PI / 180) * -speed * 0.5;
-		} else {
-			x += Math.sin(turnDirection * Math.PI / 180) * speed * 0.5;
-			y += Math.cos(turnDirection * Math.PI / 180) * -speed * 0.5;
+		// bring driftingAngle to currentAngle
+		double distance = chassisAngle - absoluteAngle;
+		if (speed < 1F) {
+			absoluteAngle = chassisAngle;
+		} else if (distance > 0) {
+			absoluteAngle += Math.min(distance, 1);
+		} else if (distance < 0) {
+			absoluteAngle += Math.max(distance, -1);
 		}
+		x += Math.sin(absoluteAngle * Math.PI / 180) * speed * 0.5;
+		y += Math.cos(absoluteAngle * Math.PI / 180) * -speed * 0.5;
 
 		if (x < 0) {
 			x = 0;
@@ -144,27 +150,22 @@ public class Car extends JPanel implements Runnable {
 
 		if (drifting) {
 
-			if (wheelAngle > 0) {
-				currentAngle += 2;
-			} else if (wheelAngle < 0) {
-				currentAngle -= 2;
-			}
-
-//			if (turnDirection > 0) {
-//				currentAngle += 2;
-//			} else if (turnDirection < 0) {
-//				currentAngle -= 2;
-//			}
+			// if (wheelAngle > 0) {
+			// currentAngle += 2;
+			// } else if (wheelAngle < 0) {
+			// currentAngle -= 2;
+			// }
+			speed *= 0.99F;
 		}
 
 		if (player == 1) {
 
 			if (key[KeyEvent.VK_LEFT] != 0) {
-				currentAngle -= 2;
+				chassisAngle -= 2;
 				wheelAngle -= 1;
 
 			} else if (key[KeyEvent.VK_RIGHT] != 0) {
-				currentAngle += 2;
+				chassisAngle += 2;
 				wheelAngle += 1;
 
 			} else {
@@ -198,10 +199,10 @@ public class Car extends JPanel implements Runnable {
 			// Player Two Key's
 
 			if (key[KeyEvent.VK_A] != 0) {
-				currentAngle -= 2;
+				chassisAngle -= 2;
 
 			} else if (key[KeyEvent.VK_D] != 0) {
-				currentAngle += 2;
+				chassisAngle += 2;
 			}
 
 			if (key[KeyEvent.VK_W] != 0) {
