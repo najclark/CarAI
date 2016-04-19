@@ -98,16 +98,10 @@ public class Car extends JPanel implements Runnable {
 		} else {
 			g.drawString("Sliding", 100, 350);
 			marks.add(new Skidmark((int)x, (int)y, 25, 40, chassisAngle, Color.black));
-			System.out.println("(" + x + ", " + y + ")");
 		}
-		if(marks.size() > 500){
+		if(marks.size() > 100){
 			marks.remove(0);
 		}
-		for(Skidmark sm : marks){
-			sm.draw(g);
-		}
-		Skidmark m = new Skidmark(0, 0, 25, 40, chassisAngle, Color.black);
-		m.draw(g);
 	}
 
 	@Override
@@ -116,15 +110,24 @@ public class Car extends JPanel implements Runnable {
 		// super.paintComponent(g);
 		this.setOpaque(false);
 
+		int i = 0;
+		for(Skidmark sm : marks){ // Draws skids before car
+			sm.setColor(new Color(50-i/2, 50-i/2, 50-i/2));
+			sm.draw(g);
+			i++;
+		}
+		
 		// rotation
 		Graphics2D g2d = (Graphics2D) g;
-		AffineTransform rot = g2d.getTransform();
+		//g2d.dispose();
+		AffineTransform rot = new AffineTransform();
 		// Rotation at the center of the car
 		float xRot = x + 12.5F;
 		float yRot = y + 20F;
 		rot.rotate(Math.toRadians(chassisAngle), xRot, yRot);
 		g2d.setTransform(rot);
 		// Draws the cars new position and angle
+		
 		g2d.drawImage(car, (int) x, (int) y, 25, 40, this);
 		//g2d.drawString(String.valueOf(speed), x, y);
 	}
