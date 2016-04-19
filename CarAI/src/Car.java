@@ -1,11 +1,12 @@
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -34,6 +35,9 @@ public class Car extends JPanel implements Runnable {
 	private double absoluteAngle = 0;
 	private boolean drifting = false;
 
+	private ArrayList<Skidmark> marks = new ArrayList<Skidmark>();
+	
+	
 	public Car(int player) {
 
 		this.player = player;
@@ -93,7 +97,17 @@ public class Car extends JPanel implements Runnable {
 			g.drawString("Not Sliding", 100, 350);
 		} else {
 			g.drawString("Sliding", 100, 350);
+			marks.add(new Skidmark((int)x, (int)y, 25, 40, chassisAngle, Color.black));
+			System.out.println("(" + x + ", " + y + ")");
 		}
+		if(marks.size() > 500){
+			marks.remove(0);
+		}
+		for(Skidmark sm : marks){
+			sm.draw(g);
+		}
+		Skidmark m = new Skidmark(0, 0, 25, 40, chassisAngle, Color.black);
+		m.draw(g);
 	}
 
 	@Override
@@ -120,7 +134,6 @@ public class Car extends JPanel implements Runnable {
 		// calculates the new X and Y - coordinates
 		// bring driftingAngle to currentAngle
 		double distance = chassisAngle - absoluteAngle;
-		System.out.println((speed/10));
 		if (speed < 1F) {
 			absoluteAngle = chassisAngle;
 		} else if (distance > 0) {
