@@ -2,8 +2,11 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,10 +37,13 @@ public class Car extends JPanel implements Runnable {
 	private double wheelBase = 100;
 	private double absoluteAngle = 0;
 	private boolean drifting = false;
+	private int maxSkids = 100;
 
 	private ArrayList<Skidmark> marks = new ArrayList<Skidmark>();
 	
-	
+	int px = 0;
+	int py = 0;
+
 	public Car(int player) {
 
 		this.player = player;
@@ -81,6 +87,7 @@ public class Car extends JPanel implements Runnable {
 		dbg = dbImage.getGraphics();
 		paintComponent(dbg);
 		g.drawImage(dbImage, 0, 0, this);
+		drawCenteredCircle(g, px, py, 10);
 		force = mass * (speed * speed) / (wheelBase * speed / wheelAngle);
 		if (Math.abs(force) > traction) {
 			drifting = true;
@@ -97,9 +104,9 @@ public class Car extends JPanel implements Runnable {
 			g.drawString("Not Sliding", 100, 350);
 		} else {
 			g.drawString("Sliding", 100, 350);
-			marks.add(new Skidmark((int)x, (int)y, 25, 40, chassisAngle, Color.black));
+			marks.add(new Skidmark((int) x, (int) y, 25, 40, chassisAngle, Color.black));
 		}
-		if(marks.size() > 100){
+		if (marks.size() > maxSkids) {
 			marks.remove(0);
 		}
 	}
@@ -109,17 +116,23 @@ public class Car extends JPanel implements Runnable {
 
 		// super.paintComponent(g);
 		this.setOpaque(false);
+		drawCenteredCircle(g, px, py, 10);
 
 		int i = 0;
-		for(Skidmark sm : marks){ // Draws skids before car
-			sm.setColor(new Color(50-i/2, 50-i/2, 50-i/2));
+		for (Skidmark sm : marks) { // Draws skids before car
+			Color c = new Color((int) (50 - i / ((double) maxSkids / 50)), (int) (50 - i / ((double) maxSkids / 50)),
+					(int) (50 - i / ((double) maxSkids / 50)));
+			sm.setColor(c);
 			sm.draw(g);
 			i++;
 		}
-		
+
 		// rotation
 		Graphics2D g2d = (Graphics2D) g;
-		//g2d.dispose();
+		Line2D.Double l = new Line2D.Double(100, 100, this.getWidth() - 100, 100);
+
+		g2d.draw(l);
+
 		AffineTransform rot = new AffineTransform();
 		// Rotation at the center of the car
 		float xRot = x + 12.5F;
@@ -127,10 +140,100 @@ public class Car extends JPanel implements Runnable {
 		rot.rotate(Math.toRadians(chassisAngle), xRot, yRot);
 		g2d.setTransform(rot);
 		// Draws the cars new position and angle
+
+		Line2D.Double l1 = new Line2D.Double(x, y + 10, x - 100, y + 10);
+		Line2D.Double l2 = new Line2D.Double(x, y, x - 100, y - 100);
+		Line2D.Double l3 = new Line2D.Double(x + 12.5, y, x + 12.5, y - 100);
+		Line2D.Double l4 = new Line2D.Double(x + 25, y, x + 125, y - 100);
+		Line2D.Double l5 = new Line2D.Double(x + 25, y + 10, x + 125, y + 10);
+
+//		Point p = getLineLineIntersection(l1.getX1(), l.getY1(), l.getX2(), l.getY2(), l1.getX1(), l1.getY1(),
+//				l1.getX2(), l1.getY2());
+//		Point2D.Float p = getIntersectionPoint(l, l2);
+//		if (p != null){
+//			System.out.println("(" + p.getX() + ", " + p.getY() + ")");
+//			px = (int)p.getX();
+//			py = (int)p.getY();
+//			//drawCenteredCircle(g2d, (int)p.getX(), (int)p.getY(), 10);
+//		}
 		
+		double length1 = Math.sqrt( ( ( l.getX2() - l.getX1() ) * ( l.getX2() - l.getX1() ) ) + ( ( l.getY2() - l.getY1() ) * ( l.getY2() - l.getY1() ) ) );
+		double length2 = Math.sqrt( ( ( l2.getX2() - l2.getX1() ) * ( l2.getX2() - l2.getX1() ) ) + ( ( l2.getY2() - l2.getY1() ) * ( l2.getY2() - l2.getY1() ) ) );
+		
+		Point p = test(l.getX1(), length1, l2.getX1(), length2);
+		//drawCenteredCircle(g, (int)p.getX(), (int)p.getY(), 10);
+		px = (int)p.getX();
+		py = (int)p.getY();
+		
+
 		g2d.drawImage(car, (int) x, (int) y, 25, 40, this);
-		//g2d.drawString(String.valueOf(speed), x, y);
+		g2d.draw(l1);
+		g2d.draw(l2);
+		g2d.draw(l3);
+		g2d.draw(l4);
+		g2d.draw(l5);
+		// g2d.drawString(String.valueOf(speed), x, y);
 	}
+	
+	public void drawCenteredCircle(Graphics g, int x, int y, int r) {
+		  x = x-(r/2);
+		  y = y-(r/2);
+		  g.fillOval(x,y,r,r);
+		}
+
+	public Point intersection(Line2D.Double l1, Line2D.Double l2) {
+		int x1 = (int) l1.getX1();
+		int y1 = (int) l1.getY1();
+		int x2 = (int) l1.getX2();
+		int y2 = (int) l1.getY2();
+		int x3 = (int) l2.getX1();
+		int y3 = (int) l2.getY1();
+		int x4 = (int) l2.getX2();
+		int y4 = (int) l2.getY2();
+
+		double d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+		if (d == 0)
+			return null;
+
+		double xi = ((x3 - x4) * (x1 * y2 - y1 * x2) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
+
+		double yi = ((y3 - y4) * (x1 * y2 - y1 * x2) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+
+		return new Point((int)xi, (int)yi);
+	}
+	
+	public Point test(double p, double r, double q, double s){
+		double t = (q - p) * s / (r * s);
+		double u = (q - p) * r / (r * s);
+		if(r*s != 0 && (0 <= t && t <= 1) && (0 <= u && u <= 1)){
+			System.out.println("("+p+t*r + ", " + q+u*s + ")");
+			return new Point((int)(p+t*r), (int)(q+u*s));
+		}
+		return new Point(0, 0);
+	}
+	
+	  public Point2D.Float getIntersectionPoint(Line2D.Double line1, Line2D.Double line2) {
+		    if (! line1.intersectsLine(line2) ) return null;
+		      double px = line1.getX1(),
+		            py = line1.getY1(),
+		            rx = line1.getX2()-px,
+		            ry = line1.getY2()-py;
+		      double qx = line2.getX1(),
+		            qy = line2.getY1(),
+		            sx = line2.getX2()-qx,
+		            sy = line2.getY2()-qy;
+
+		      double det = sx*ry - sy*rx;
+		      if (det == 0) {
+		        return null;
+		      } else {
+		        double z = (sx*(qy-py)+sy*(px-qx))/det;
+		        if (z==0 ||  z==1) return null;  // intersection at end point!
+		        return new Point2D.Float(
+		          (float)(px+z*rx), (float)(py+z*ry));
+		      }
+		 } // end intersection line-line
 
 	protected void calculateCarPosition() {
 
@@ -140,9 +243,9 @@ public class Car extends JPanel implements Runnable {
 		if (speed < 1F) {
 			absoluteAngle = chassisAngle;
 		} else if (distance > 0) {
-			absoluteAngle += Math.min(distance, (speed/10));
+			absoluteAngle += Math.min(distance, (speed / 10));
 		} else if (distance < 0) {
-			absoluteAngle += Math.max(distance, -1*(speed/10));
+			absoluteAngle += Math.max(distance, -1 * (speed / 10));
 		}
 		x += Math.sin(absoluteAngle * Math.PI / 180) * speed * 0.5;
 		y += Math.cos(absoluteAngle * Math.PI / 180) * -speed * 0.5;
