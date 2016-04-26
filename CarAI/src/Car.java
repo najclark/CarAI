@@ -40,9 +40,6 @@ public class Car extends JPanel implements Runnable {
 	private int maxSkids = 100;
 
 	private ArrayList<Skidmark> marks = new ArrayList<Skidmark>();
-	
-	int px = 0;
-	int py = 0;
 
 	public Car(int player) {
 
@@ -87,7 +84,6 @@ public class Car extends JPanel implements Runnable {
 		dbg = dbImage.getGraphics();
 		paintComponent(dbg);
 		g.drawImage(dbImage, 0, 0, this);
-		drawCenteredCircle(g, px, py, 10);
 		force = mass * (speed * speed) / (wheelBase * speed / wheelAngle);
 		if (Math.abs(force) > traction) {
 			drifting = true;
@@ -116,7 +112,6 @@ public class Car extends JPanel implements Runnable {
 
 		// super.paintComponent(g);
 		this.setOpaque(false);
-		drawCenteredCircle(g, px, py, 10);
 
 		int i = 0;
 		for (Skidmark sm : marks) { // Draws skids before car
@@ -129,9 +124,6 @@ public class Car extends JPanel implements Runnable {
 
 		// rotation
 		Graphics2D g2d = (Graphics2D) g;
-		Line2D.Double l = new Line2D.Double(100, 100, this.getWidth() - 100, 100);
-
-		g2d.draw(l);
 
 		AffineTransform rot = new AffineTransform();
 		// Rotation at the center of the car
@@ -146,32 +138,42 @@ public class Car extends JPanel implements Runnable {
 		Line2D.Double l3 = new Line2D.Double(x + 12.5, y, x + 12.5, y - 100);
 		Line2D.Double l4 = new Line2D.Double(x + 25, y, x + 125, y - 100);
 		Line2D.Double l5 = new Line2D.Double(x + 25, y + 10, x + 125, y + 10);
-
-//		Point p = getLineLineIntersection(l1.getX1(), l.getY1(), l.getX2(), l.getY2(), l1.getX1(), l1.getY1(),
-//				l1.getX2(), l1.getY2());
-//		Point2D.Float p = getIntersectionPoint(l, l2);
-//		if (p != null){
-//			System.out.println("(" + p.getX() + ", " + p.getY() + ")");
-//			px = (int)p.getX();
-//			py = (int)p.getY();
-//			//drawCenteredCircle(g2d, (int)p.getX(), (int)p.getY(), 10);
-//		}
 		
-		double length1 = Math.sqrt( ( ( l.getX2() - l.getX1() ) * ( l.getX2() - l.getX1() ) ) + ( ( l.getY2() - l.getY1() ) * ( l.getY2() - l.getY1() ) ) );
-		double length2 = Math.sqrt( ( ( l2.getX2() - l2.getX1() ) * ( l2.getX2() - l2.getX1() ) ) + ( ( l2.getY2() - l2.getY1() ) * ( l2.getY2() - l2.getY1() ) ) );
+		Line2D.Double l11 = new Line2D.Double(x, y + 10, x - 50, y + 10);
+		Line2D.Double l21 = new Line2D.Double(x, y, x - 50, y - 50);
+		Line2D.Double l31 = new Line2D.Double(x + 12.5, y, x + 12.5, y - 50);
+		Line2D.Double l41 = new Line2D.Double(x + 25, y, x + 75, y - 50);
+		Line2D.Double l51 = new Line2D.Double(x + 25, y + 10, x + 75, y + 10);
 		
-		Point p = test(l.getX1(), length1, l2.getX1(), length2);
-		//drawCenteredCircle(g, (int)p.getX(), (int)p.getY(), 10);
-		px = (int)p.getX();
-		py = (int)p.getY();
+		Line2D.Double l12 = new Line2D.Double(x, y + 10, x - 25, y + 10);
+		Line2D.Double l22 = new Line2D.Double(x, y, x - 25, y - 25);
+		Line2D.Double l32 = new Line2D.Double(x + 12.5, y, x + 12.5, y - 25);
+		Line2D.Double l42 = new Line2D.Double(x + 25, y, x + 50, y - 25);
+		Line2D.Double l52 = new Line2D.Double(x + 25, y + 10, x + 50, y + 10);
 		
 
 		g2d.drawImage(car, (int) x, (int) y, 25, 40, this);
+		
+		g2d.setColor(Color.green);
 		g2d.draw(l1);
 		g2d.draw(l2);
 		g2d.draw(l3);
 		g2d.draw(l4);
 		g2d.draw(l5);
+
+		g2d.setColor(Color.yellow);
+		g2d.draw(l11);
+		g2d.draw(l21);
+		g2d.draw(l31);
+		g2d.draw(l41);
+		g2d.draw(l51);
+		
+		g2d.setColor(Color.red);
+		g2d.draw(l12);
+		g2d.draw(l22);
+		g2d.draw(l32);
+		g2d.draw(l42);
+		g2d.draw(l52);
 		// g2d.drawString(String.valueOf(speed), x, y);
 	}
 	
